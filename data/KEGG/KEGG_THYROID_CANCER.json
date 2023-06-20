@@ -1,0 +1,3 @@
+{
+  "KEGG_THYROID_CANCER" : {"systematicName":"M523","pmid":"","exactSource":"hsa05216","geneSymbols":["BRAF","CCDC6","CCND1","CDH1","CTNNB1","HRAS","KRAS","LEF1","MAP2K1","MAP2K2","MAPK1","MAPK3","MYC","NCOA4","NRAS","NTRK1","PAX8","PPARG","RET","RXRA","RXRB","RXRG","TCF7","TCF7L1","TCF7L2","TFG","TP53","TPM3","TPR"],"msigdbURL":"https://www.gsea-msigdb.org/gsea/msigdb/human/geneset/KEGG_THYROID_CANCER","externalDetailsURL":["http://www.genome.jp/kegg/pathway/hsa/hsa05216.html"],"filteredBySimilarity":[],"externalNamesForSimilarTerms":[],"collection":"C2:CP:KEGG"}
+}
