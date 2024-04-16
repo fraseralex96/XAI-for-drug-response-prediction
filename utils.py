@@ -6,42 +6,43 @@ from data_makers import *
 
 import itertools
 
-def cell_line_split(X, y, test_size=0.2, random_state=0):
-
-    cl = [] #list of cell lines
+# tts across cell lines
+def cell_line_split(X, y, test_size=0.2, random_state=0):   
+    cl = []
+    #loop to extract cell lines from X
     for i in X.index:
-        cell = i.split('::')[0]
-        if cell not in cl:
+        cell = i.split('::')[0] 
+        if cell not in cl: # remove repeats
             cl.append(cell)
-
-    cl_train, cl_test = train_test_split(cl, test_size=test_size, random_state=random_state) #tts on the cell line list
+    cl_train, cl_test = train_test_split(cl, test_size=test_size, random_state=random_state) ## tts the cell lines
     
-    assert len(set(cl_train).intersection(cl_test)) == 0 
+    assert len(set(cl_train).intersection(cl_test)) == 0
     
-    # produce train and test indexes to split dataframes
     train_indexes = []
     test_indexes = []
+    
+    # split indexes in X df by the previous cell lines tts
     for i in X.index:
         cell_line = i.split('::')[0]
         if cell_line in cl_train:
             train_indexes.append(i)
         if cell_line in cl_test:
             test_indexes.append(i)
-
-    if y is None: # X only split
+            
+    # perform individual splits for the NN inputs
+    if y is None:
         X_train = X.reindex(train_indexes)
         X_test = X.reindex(test_indexes)
         
-        return X_train, X_test     
-
-    else: # X and y split
+        return X_train, X_test        
+    else:
         X_train = X.reindex(train_indexes)
         X_test = X.reindex(test_indexes)
         y_train = y.reindex(train_indexes)
         y_test = y.reindex(test_indexes)
     
         return X_train, X_test, y_train, y_test
-
+    
 #function to find the largest elements
 def Nmaxelements(list1, N):
     list2 = list1[:] #produce temporary list for the function
@@ -69,7 +70,7 @@ def topFeatures(classify, X_main, topX = 22786, N = 22786):
     
     return rfr_largest_names, rfr_largest_scores
 
-
+#returns the top specified number of features
 def feat_finder(file_list, topX = 20):
     dict_list = []
     for f in file_list:
@@ -114,6 +115,7 @@ def feat_finder(file_list, topX = 20):
 
     return sorted_dict
 
+#separates the X dataframe by cancer type
 def cancer_lines(X_main):
     cl_data = pd.read_excel("data/41467_2021_22170_MOESM3_ESM.xlsx")
     
@@ -162,6 +164,7 @@ def table_make(title, data, headers, file):
         df.to_csv(file)
     return df
 
+#filter X for cancer type
 def cancer_filter(X, y, cancer = 'AML'):
     cl_data = pd.read_excel("data/41467_2021_22170_MOESM3_ESM.xlsx")
 
@@ -184,11 +187,14 @@ def cancer_filter(X, y, cancer = 'AML'):
     
     return X, y
 
+# changes the residue style
 def residue_changer(phos_list):
     residue_dict = {'Ser':'S', 'Thr':'T', 'Met':'M', 'Tyr':'Y', 'Arg':'R', 'Lys':'K'}
     new_phos_list = []
-    count = 0
+    
     for i, feat in enumerate(phos_list):
+        
+        #isolate the residue from the phosphopeptide name
         prot, residue = feat.split('(')
         residue = residue.split(')')[0]
         
@@ -201,12 +207,14 @@ def residue_changer(phos_list):
 
             new_phos_list.append(new_phos)
         
+        # double check if format is S939 rather than Ser939
         elif isinstance(residue[0], str) and isinstance(residue[1], int):
             phos = f'{prot}({residue});'
             new_phos_list.append(phos)
         
     return new_phos_list
 
+# returns the phosphopeptides associated with a given list of kinases
 def kinase_target_finder(kinases):
     #kinase targets from SIGNOR database
     signor_df = pd.read_csv('data/human_phosphorylations_26_05_23.txt', sep='\t')
@@ -222,7 +230,7 @@ def kinase_target_finder(kinases):
     
     return targs_phospho
 
-
+# returns a number of metrics regarding significant drug targets 
 def SHAP_targets(X_main, explainer, X_test, y_test, dtype = 'phospho', strict = False):
     indexes = []
     total_feats = []
@@ -335,6 +343,8 @@ def SHAP_targets(X_main, explainer, X_test, y_test, dtype = 'phospho', strict = 
         
     return indexes, (total_feats, percent_of_total, total_sig, percent_of_sig), (targets, percent_sig, sig_targs, insig_targs)
 
+
+# returns a number of metrics regarding significant drug targets 
 def SHAP_targets_NN(X_main, explainer, X_test, y_test, dtype = 'phospho', strict=False):
     indexes = []
     total_feats = []
@@ -427,6 +437,8 @@ def SHAP_targets_NN(X_main, explainer, X_test, y_test, dtype = 'phospho', strict
         
     return indexes, (total_feats, percent_of_total, total_sig, percent_of_sig), (targets, percent_sig, sig_targs, insig_targs)
 
+
+# returns a number of metrics regarding significant drug targets 
 def IG_targets_NN(X_main, explainer, X_test, y_test, dtype = 'phospho', strict = False):
     indexes = []
     total_feats = []
@@ -522,6 +534,7 @@ def IG_targets_NN(X_main, explainer, X_test, y_test, dtype = 'phospho', strict =
         
     return indexes, (total_feats, percent_of_total, total_sig, percent_of_sig), (targets, percent_sig, sig_targs, insig_targs)
 
+# returns index of a target
 def index_finder(targ, df):
     index = 0
     for i, v in df.iterrows():
@@ -530,9 +543,8 @@ def index_finder(targ, df):
         index+=1
     print('No index found')
     
+#standardise by removing the mean from each point and dividing by sd
 def standardiser(train, test):
-    #standardise by removing the mean from each point and dividing by sd
-
     #set the mean
     mean = train.mean(axis=0)
     std = train.std(axis=0)
@@ -546,6 +558,7 @@ def standardiser(train, test):
 
     return train, test
 
+# turns the IC50 values into classes
 def classyFire(y):
     for i in range(len(y)):
         if y[i] < 2.36: 
@@ -558,6 +571,7 @@ def classyFire(y):
     print(f'0 : high responsiveness\n1 : intermediate responsiveness\n2 : low responsiveness')
     return y
 
+# removes the one hot from the outputs for explainability techniques
 def drug_feat_remover(exp_list):
     # remove drug features
     feat_list = []
@@ -568,6 +582,7 @@ def drug_feat_remover(exp_list):
 
     return feat_list
 
+# calculate electronic markers for drug response
 def EMDR_finder(drug, dtype='phospho', rawData = True):
     #read in data types
     if dtype == 'phospho' and rawData == False:
